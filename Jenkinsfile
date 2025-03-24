@@ -5,7 +5,7 @@ pipeline {
         }
     }
     environment {
-        DOCKER_REGISTRY 'syedali161'  
+        DOCKER_REGISTRY = 'syedali161'  
         IMAGE_NAME = "jenkins-demo-app"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         SLACK_CHANNEL = '#all-span-devops'       // Replace with your Slack channel
