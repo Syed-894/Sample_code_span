@@ -7,7 +7,7 @@ pipeline {
         IMAGE_TAG = "${env.BUILD_NUMBER}"                           // Build number as image tag
         DOCKER_CREDENTIALS = 'docker'                               // Jenkins Credentials ID
         SLACK_CHANNEL = '#all-span-devops'                          // Slack channel name
-        GIT_REPO_URL = 'https://github.com/Syed-894/Sample_code_span.git'  // GitHub Repo URL
+        GIT_REPO_URL = 'https://github.com/Syed-894/Sample_code_span.git'  // GitHub Repo U
     }
 
     triggers {
