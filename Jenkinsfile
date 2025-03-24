@@ -3,7 +3,7 @@ pipeline {
         docker {
             image 'docker:latest'
 
-            runArgs '-u root'
+            args '-u root'
 
         }
     }
