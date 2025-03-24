@@ -5,7 +5,7 @@ pipeline {
         DOCKER_REGISTRY = 'syedali161'                              // DockerHub username
         IMAGE_NAME = "jenkins-demo-app"                             // Docker Image name
         IMAGE_TAG = "${env.BUILD_NUMBER}"                           // Build number as image tag
-        DOCKER_CREDENTIALS = 'docker'                               // Jenkins Credentials ID
+        DOCKER_CREDENTIALS = 'docker-credentials'                               // Jenkins Credentials ID
         SLACK_CHANNEL = '#all-span-devops'                          // Slack channel name
         GIT_REPO_URL = 'https://github.com/Syed-894/Sample_code_span.git'  // GitHub Repo U
     }
