@@ -10,11 +10,9 @@ pipeline {
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         SLACK_CHANNEL = '#all-span-devops'       // Replace with your Slack channel
     }
-    tools {
-        //  No tools section
-    }
-    triggers {
-        githubPush(branchFilter: 'main')
+
+        triggers {
+        githubPush() // The githubPush trigger does not take branchFilter.  It triggers on any push.
     }
     parameters {
         string(
