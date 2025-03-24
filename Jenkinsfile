@@ -1,8 +1,9 @@
 pipeline {
     agent {
         docker {
-            image 'docker:latest'
-            // Mount the Docker socket and use --privileged (necessary for this approach)
+            // Use a Docker image that includes common utilities
+            image 'alpine/git:latest'  // Alpine with Git, lightweight and has shell utils
+            // Mount the Docker socket and use --privileged (necessary for DinD)
             args '-v /var/run/docker.sock:/var/run/docker.sock --privileged'
         }
     }
@@ -33,6 +34,7 @@ pipeline {
             steps {
                 script {
                     // 1. Ensure the 'docker' group exists
+                    sh 'apk add --no-cache shadow'  // Install shadow for groupadd, usermod
                     sh 'groupadd -f docker || true'
 
                     // 2. Determine the UID and GID of the 'jenkins' user on the host
@@ -40,7 +42,7 @@ pipeline {
                     def hostGid = sh(returnStdout: true, script: 'id -g jenkins').trim()
 
                     // 3. Create a 'jenkins' user inside the container with the same UID/GID
-                    sh "adduser --system --uid ${hostUid} --gid ${hostGid} jenkins"
+                    sh "adduser -D -u ${hostUid} -g ${hostGid} jenkins"
 
                     // 4. Add the 'jenkins' user to the 'docker' group inside the container
                     sh 'usermod -aG docker jenkins'
@@ -75,3 +77,4 @@ pipeline {
         }
     }
 }
+
