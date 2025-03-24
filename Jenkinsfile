@@ -2,6 +2,9 @@ pipeline {
     agent {
         docker {
             image 'docker:latest'
+
+            runArgs '-u root'
+
         }
     }
     environment {
