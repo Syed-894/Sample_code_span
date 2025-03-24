@@ -1,8 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'docker:latest' // Or a specific version, like 'docker:24.0'
-            // Use Docker-in-Docker (DinD)
+            image 'docker:latest'
+            // Mount the Docker socket and use --privileged (necessary for this approach)
             args '-v /var/run/docker.sock:/var/run/docker.sock --privileged'
         }
     }
@@ -32,8 +32,24 @@ pipeline {
         stage('Build and Push Docker Image') {
             steps {
                 script {
-                    // No need for user modification with DinD in this way.
-                    def dockerImage = docker.build("${env.IMAGE_NAME}:${env.IMAGE_TAG}", '.')
+                    // 1. Ensure the 'docker' group exists
+                    sh 'groupadd -f docker || true'
+
+                    // 2. Determine the UID and GID of the 'jenkins' user on the host
+                    def hostUid = sh(returnStdout: true, script: 'id -u jenkins').trim()
+                    def hostGid = sh(returnStdout: true, script: 'id -g jenkins').trim()
+
+                    // 3. Create a 'jenkins' user inside the container with the same UID/GID
+                    sh "adduser --system --uid ${hostUid} --gid ${hostGid} jenkins"
+
+                    // 4. Add the 'jenkins' user to the 'docker' group inside the container
+                    sh 'usermod -aG docker jenkins'
+
+                    // 5. Switch to the 'jenkins' user before building the image
+                    sh 'chown -R jenkins:jenkins /var/lib/jenkins'
+                    sh 'su - jenkins -c "docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} ."'
+
+                    // Push the image
                     withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh "docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD} ${env.DOCKER_REGISTRY}"
                         sh "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
