@@ -1,84 +1,51 @@
 pipeline {
     agent any
-
+    
     environment {
-        DOCKER_REGISTRY = 'syedali161'                              // DockerHub username
-        IMAGE_NAME = "jenkins-demo-app"                             // Docker Image name
-        IMAGE_TAG = "${env.BUILD_NUMBER}"                           // Build number as image tag
-        DOCKER_CREDENTIALS = 'docker'                               // Jenkins Credentials ID
-        SLACK_CHANNEL = '#all-span-devops'                          // Slack channel name
-        GIT_REPO_URL = 'https://github.com/Syed-894/Sample_code_span.git'  // GitHub Repo URL
-    }
-
-    triggers {
-        githubPush()  // Trigger on GitHub push
-    }
-
-    parameters {
-        string(
-            name: 'GIT_BRANCH',
-            defaultValue: 'main',
-            description: 'Branch to checkout'
-        )
+        DOCKER_USERNAME = credentials('docker-username')
+        DOCKER_PASSWORD = credentials('docker-password')
     }
 
     stages {
-
-        stage('Clone GitHub Repo') {
+        
+        stage('Clone Repository') {
             steps {
-                git branch: "${params.GIT_BRANCH}",
-                    url: "${GIT_REPO_URL}"
+                checkout([$class: 'GitSCM', 
+                    branches: [[name: '*/main']], 
+                    userRemoteConfigs: [[url: 'https://github.com/Syed-894/Sample_code_span.git', 
+                    credentialsId: 'github-credentials']]
+                ])
             }
         }
-
+        
         stage('Build Docker Image') {
             steps {
                 script {
-                    withDockerRegistry([credentialsId: "${DOCKER_CREDENTIALS}", url: 'https://index.docker.io/v1/']) {
-                        sh """
-                        docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .
-                        """
-                    }
+                    def imageTag = "syedali161/jenkins-demo-app:${env.BUILD_NUMBER}"
+                    sh "docker build -t ${imageTag} ."
                 }
             }
         }
-
+        
         stage('Push Docker Image') {
             steps {
                 script {
-                    withDockerRegistry([credentialsId: "${DOCKER_CREDENTIALS}", url: 'https://index.docker.io/v1/']) {
-                        sh """
-                        docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-                        """
+                    withDockerRegistry([credentialsId: 'docker', url: 'https://index.docker.io/v1/']) {
+                        sh '''
+                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                        docker tag syedali161/jenkins-demo-app:${env.BUILD_NUMBER} syedali161/jenkins-demo-app:latest
+                        docker push syedali161/jenkins-demo-app:${env.BUILD_NUMBER}
+                        docker push syedali161/jenkins-demo-app:latest
+                        '''
                     }
                 }
             }
         }
-
-        stage('Deploy with Docker Compose') {
-            steps {
-                sh """
-                docker-compose down || true
-                docker-compose up -d
-                """
-            }
-        }
     }
-
+    
     post {
-        success {
-            slackSend(
-                channel: "${SLACK_CHANNEL}",
-                color: 'good',
-                message: "✅ SUCCESS: Build #${env.BUILD_NUMBER} completed successfully! 🎉"
-            )
-        }
-        failure {
-            slackSend(
-                channel: "${SLACK_CHANNEL}",
-                color: 'danger',
-                message: "❌ FAILURE: Build #${env.BUILD_NUMBER} failed. Please check the logs. 🚨"
-            )
+        always {
+            cleanWs()
         }
     }
 }
