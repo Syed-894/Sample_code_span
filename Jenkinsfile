@@ -34,7 +34,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    withDockerRegistry([credentialsId: "${docker}", url: 'https://index.docker.io/v1/']) {
+                    withDockerRegistry([credentialsId: "${docker-credentials}", url: 'https://index.docker.io/v1/']) {
                         sh """
                         docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .
                         """
@@ -46,7 +46,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    withDockerRegistry([credentialsId: "${docker}", url: 'https://index.docker.io/v1/']) {
+                    withDockerRegistry([credentialsId: "${docker-credentials}", url: 'https://index.docker.io/v1/']) {
                         sh """
                         docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
                         """
