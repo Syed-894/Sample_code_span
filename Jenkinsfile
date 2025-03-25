@@ -6,27 +6,37 @@ pipeline {
             args '-v /var/run/docker.sock:/var/run/docker.sock --privileged'
         }
     }
+    //Move SLACK_CHANNEL definition here
     environment {
         DOCKER_REGISTRY = 'syedali161'
         IMAGE_NAME = "jenkins-demo-app"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-        SLACK_CHANNEL = '#all-span-devops'
+        
+        GIT_BRANCH = 'main' //Added default
+        GIT_REPO_URL = 'https://github.com/Syed-894/Sample_code_span.git'
+        DOCKER_CREDENTIALS = 'docker-credentials'
+        
     }
+    string SLACK_CHANNEL = '#all-span-devops'  // Slack channel name - defined outside stages
+
+
     triggers {
         githubPush()
     }
+
     parameters {
         string(
             name: 'GIT_BRANCH',
-            defaultValue: 'main',
+            defaultValue: GIT_BRANCH,
             description: 'Branch to checkout'
         )
     }
+
     stages {
         stage('Checkout') {
             steps {
                 git branch: "${params.GIT_BRANCH}",
-                    url: 'https://github.com/Syed-894/Sample_code_span.git'
+                    url: "${GIT_REPO_URL}"
             }
         }
         stage('Build and Push Docker Image') {
@@ -45,7 +55,7 @@ pipeline {
                     sh 'chown -R $(whoami):$(whoami) /var/lib/jenkins || true'
                     sh 'su - $(whoami) -c "docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."'
 
-                    withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh "docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD} ${env.DOCKER_REGISTRY}"
                         sh "docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
                     }
@@ -61,11 +71,11 @@ pipeline {
     }
     post {
         success {
-            slackSend channel: "${SLACK_CHANNEL}",
+            slackSend channel: SLACK_CHANNEL,
                 message: "Job '${env.JOB_NAME}' build ${env.BUILD_NUMBER} succeeded."
         }
         failure {
-            slackSend channel: "${SLACK_CHANNEL}",
+            slackSend channel: SLACK_CHANNEL,
                 message: "Job '${env.JOB_NAME}' build ${env.BUILD_NUMBER} failed."
         }
     }
