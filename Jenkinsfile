@@ -1,12 +1,12 @@
 pipeline {
-    agent any 
+    agent any
 
     environment {
-        DOCKER_REGISTRY = 'syedali161'                              // DockerHub username
-        IMAGE_NAME = "jenkins-demo-app"                             // Docker Image name
-        IMAGE_TAG = "${env.BUILD_NUMBER}"                           // Build number as image tag
-        DOCKER_CREDENTIALS = 'docker-credentials'                               // Jenkins Credentials ID
-        SLACK_CHANNEL = '#all-span-devops'                          // Slack channel name
+        DOCKER_REGISTRY = 'syedali161'                                      // DockerHub username
+        IMAGE_NAME = "jenkins-demo-app"                                         // Docker Image name
+        IMAGE_TAG = "${env.BUILD_NUMBER}"                                        // Build number as image tag
+        DOCKER_CREDENTIALS = 'docker-credentials'                                         // Jenkins Credentials ID
+        SLACK_CHANNEL = '#all-span-devops'                                     // Slack channel name
         GIT_REPO_URL = 'https://github.com/Syed-894/Sample_code_span.git'  // GitHub Repo U
     }
 
@@ -34,9 +34,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    withDockerRegistry([credentialsId: "${DOCKER-CREDENTIALS}", url: 'https://index.docker.io/v1/']) {
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh """
-                        docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .
+                            docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} .
                         """
                     }
                 }
@@ -46,9 +46,9 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    withDockerRegistry([credentialsId: "${DOCKER-CREDENTIALS}", url: 'https://index.docker.io/v1/']) {
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh """
-                        docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                            docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
                         """
                     }
                 }
@@ -58,8 +58,8 @@ pipeline {
         stage('Deploy with Docker Compose') {
             steps {
                 sh """
-                docker-compose down || true
-                docker-compose up -d
+                    docker-compose down || true
+                    docker-compose up -d
                 """
             }
         }
