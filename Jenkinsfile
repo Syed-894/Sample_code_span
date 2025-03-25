@@ -24,18 +24,24 @@ pipeline {
             }
         }
         stage('Build Docker Image') {
-            steps {
-                script {
-                    // Create a .dockerignore file
-                    sh 'echo ".docker" > .dockerignore'
-                    def dockerImage = docker.build("${env.IMAGE_NAME}:${env.IMAGE_TAG}", '.')
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh "docker login -u $DOCKER_USER -p $DOCKER_PASSWORD ${env.DOCKER_REGISTRY}"
-                        sh "docker push ${env.DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
-                    }
-                }
+    steps {
+        script {
+            // Set Docker config path to avoid permission issues
+            sh 'export DOCKER_CONFIG=$HOME/.docker'
+            
+            // Create a .dockerignore file
+            sh 'echo ".docker" > .dockerignore'
+
+            def dockerImage = docker.build("${env.IMAGE_NAME}:${env.IMAGE_TAG}", '.')
+            withCredentials([usernamePassword(credentialsId: 'docker-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
+                sh "docker login -u $DOCKER_USER -p $DOCKER_PASSWORD"
+                sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                sh "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
             }
         }
+    }
+}
+
         stage('Deploy') {
             steps {
                 // Example deployment using docker-compose
