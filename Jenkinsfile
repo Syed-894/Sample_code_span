@@ -5,9 +5,12 @@ pipeline {
         IMAGE_NAME = "jenkins-demo-app"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         SLACK_CHANNEL = '#all-span-devops'  // your Slack channel name
-    }  
+    }
+    tools {
+        //  removed maven
+    }
     triggers {
-        githubPush(branchFilter: 'main')
+        githubPush() // Removed branchFilter
     }
     parameters {
         string(name: 'GIT_BRANCH', defaultValue: 'main', description: 'Branch to checkout')
@@ -18,7 +21,7 @@ pipeline {
                 git branch: "${params.GIT_BRANCH}", url: 'https://github.com/Syed-894/Sample_code_span.git' // your github username
             }
         }
-        stage('Build and Push Docker Image') {
+        stage('Build Docker Image') {
             steps {
                 script {
                     def dockerImage = docker.build("${env.IMAGE_NAME}:${env.IMAGE_TAG}", '.')
