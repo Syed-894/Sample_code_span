@@ -5,7 +5,7 @@ pipeline {
         IMAGE_NAME = "jenkins-demo-app"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         SLACK_CHANNEL = '#all-span-devops'  // your Slack channel name
-    }
+    }  
     triggers {
         githubPush(branchFilter: 'main')
     }
