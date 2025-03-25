@@ -2,7 +2,8 @@ pipeline {
      agent {
         docker {
             image 'docker:latest'
-            args '-u root'  // Run the container as root (LESS SECURE, for testing ONLY)
+           args '-e "DOCKER_GROUP_GID=$(stat -c %g /var/run/docker.sock)"' // More secure option
+
            
         }
     }
