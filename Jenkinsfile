@@ -26,9 +26,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Fix docker permissions
-                    sh 'mkdir -p /.docker'
-                    sh 'chown -R $USER:$USER /.docker'
+                    // Fix docker permissions by creating .docker in workspace
+                    sh 'mkdir -p ${WORKSPACE}/.docker'
+                    sh 'chown -R $USER:$USER ${WORKSPACE}/.docker'
                     def dockerImage = docker.build("${env.IMAGE_NAME}:${env.IMAGE_TAG}", '.')
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh "docker login -u $DOCKER_USER -p $DOCKER_PASSWORD ${env.DOCKER_REGISTRY}"
