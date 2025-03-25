@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'docker:latest'
+            image 'alpine/git:latest'
             // Mount the Docker socket and use --privileged (necessary for this approach)
             args '-v /var/run/docker.sock:/var/run/docker.sock --privileged'
         }
@@ -32,13 +32,16 @@ pipeline {
         stage('Build and Push Docker Image') {
             steps {
                 script {
-                    // 1. Ensure the 'docker' group exists
+                    // 1. Install necessary tools
+                    sh 'apk add --no-cache shadow coreutils'
+
+                    // 2. Ensure the 'docker' group exists
                     sh 'groupadd -f docker || true'
 
-                    // 2. Add the current user in the container to the 'docker' group
+                    // 3. Add the current user to the 'docker' group
                     sh 'usermod -aG docker $(whoami) || true'
 
-                    // 3. Switch to the current user before building the image
+                    // 4. Switch to the current user before building the image
                     sh 'chown -R $(whoami):$(whoami) /var/lib/jenkins || true'
                     sh 'su - $(whoami) -c "docker build -t ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."'
 
