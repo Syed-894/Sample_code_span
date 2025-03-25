@@ -6,9 +6,7 @@ pipeline {
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         SLACK_CHANNEL = '#all-span-devops'  // your Slack channel name
     }
-    tools {
-        //  removed maven
-    }
+    
     triggers {
         githubPush() // Removed branchFilter
     }
