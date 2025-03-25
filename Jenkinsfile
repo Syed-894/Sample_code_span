@@ -26,21 +26,25 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Set Docker config path to a writable directory
-                    sh '''
-                        mkdir -p /tmp/.docker
-                        chmod 700 /tmp/.docker
-                        export DOCKER_CONFIG=/tmp/.docker
-                    '''
-                    
-                    // Create a .dockerignore file
-                    sh 'echo ".docker" > .dockerignore'
+                    withEnv(['DOCKER_CONFIG=/tmp/.docker']) {
+                        // Create the .docker directory and set permissions
+                        sh '''
+                            mkdir -p /tmp/.docker
+                            chmod 700 /tmp/.docker
+                        '''
 
-                    def dockerImage = docker.build("${env.IMAGE_NAME}:${env.IMAGE_TAG}", '.')
-                    withCredentials([usernamePassword(credentialsId: 'docker-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh "docker login -u $DOCKER_USER -p $DOCKER_PASSWORD"
-                        sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                        sh "docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                        // Create a .dockerignore file
+                        sh 'echo ".docker" > .dockerignore'
+
+                        // Build the Docker image
+                        def dockerImage = docker.build("${env.IMAGE_NAME}:${env.IMAGE_TAG}", '.')
+
+                        // Authenticate and push the image
+                        withCredentials([usernamePassword(credentialsId: 'docker-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
+                            sh "docker --config /tmp/.docker login -u $DOCKER_USER -p $DOCKER_PASSWORD"
+                            sh "docker --config /tmp/.docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                            sh "docker --config /tmp/.docker push ${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                        }
                     }
                 }
             }
