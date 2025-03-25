@@ -26,9 +26,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Fix docker permissions by creating .docker in workspace and setting permissions
-                    sh 'mkdir -p ${WORKSPACE}/.docker'
-                    sh 'chmod -R 777 ${WORKSPACE}/.docker'  // Set permissions to read, write, and execute for all
+                    // Create a .dockerignore file
+                    sh 'echo ".docker" > .dockerignore'
                     def dockerImage = docker.build("${env.IMAGE_NAME}:${env.IMAGE_TAG}", '.')
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh "docker login -u $DOCKER_USER -p $DOCKER_PASSWORD ${env.DOCKER_REGISTRY}"
