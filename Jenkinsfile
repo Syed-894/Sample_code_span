@@ -32,7 +32,7 @@ pipeline {
                     def dockerImage = docker.build("${env.IMAGE_NAME}:${env.IMAGE_TAG}", '.')
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASSWORD')]) {
                         sh "docker login -u $DOCKER_USER -p $DOCKER_PASSWORD ${env.DOCKER_REGISTRY}"
-                        dockerImage.push("${env.DOCKER_REGISTRY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}")
+                        dockerImage.push("${env.DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}")
                     }
                 }
             }
