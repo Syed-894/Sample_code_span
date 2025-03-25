@@ -1,5 +1,11 @@
 pipeline {
-    agent any
+     agent {
+        docker {
+            image 'docker:latest'
+            args '-u root'  // Run the container as root (LESS SECURE, for testing ONLY)
+           
+        }
+    }
 
     environment {
         DOCKER_REGISTRY = 'syedali161'                                      // DockerHub username
